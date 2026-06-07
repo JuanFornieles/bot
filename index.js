@@ -9,12 +9,16 @@ const {
 
 require('dotenv').config();
 
-// 👉 CLIENTE
+// =======================
+// CLIENTE DISCORD
+// =======================
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
 
-// 👉 COMANDOS
+// =======================
+// COMANDOS
+// =======================
 const commands = [
     new SlashCommandBuilder()
         .setName('info')
@@ -22,10 +26,28 @@ const commands = [
         .toJSON()
 ];
 
-// 👉 REST API
+// =======================
+// REGISTRO DE COMANDOS
+// =======================
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
-// 👉 CUANDO EL BOT ESTÁ LISTO
+// =======================
+// SERVIDOR WEB (IMPORTANTE EN REPLIT / RENDER)
+// =======================
+const express = require('express');
+const app = express();
+
+app.get('/', (req, res) => {
+    res.send('Bot activo ✔️');
+});
+
+app.listen(3000, () => {
+    console.log('🌐 Servidor web activo en puerto 3000');
+});
+
+// =======================
+// BOT LISTO
+// =======================
 client.once(Events.ClientReady, async (c) => {
     console.log(`✅ Conectado como ${c.user.tag}`);
 
@@ -44,12 +66,13 @@ client.once(Events.ClientReady, async (c) => {
     }
 });
 
-// 👉 INTERACCIONES (IMPORTANTE: SIN CRASH)
+// =======================
+// INTERACCIONES
+// =======================
 client.on(Events.InteractionCreate, async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
     try {
-        // ⚠️ SIEMPRE RESPONDER RÁPIDO
         await interaction.deferReply();
 
         if (interaction.commandName === 'info') {
@@ -61,5 +84,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
 });
 
-// 👉 LOGIN
+// =======================
+// LOGIN
+// =======================
 client.login(process.env.TOKEN);
