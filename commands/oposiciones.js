@@ -3,41 +3,37 @@ const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('oposiciones')
-        .setDescription('Información sobre las oposiciones'),
+        .setDescription('Información sobre oposiciones'),
 
     async execute(interaction) {
+
+        // 🔥 IMPORTANTE: evita error 10062
+        await interaction.deferReply();
 
         const ahora = new Date();
 
         const embed = new EmbedBuilder()
-            .setTitle('📚 OPOSICIONES - INFORMACIÓN')
+            .setTitle('📚 OPOSICIONES')
             .setColor(0x2b90d9)
-            .setThumbnail('https://cdn-icons-png.flaticon.com/512/3135/3135768.png')
             .addFields(
                 {
-                    name: '📅 Fecha actual',
+                    name: '📅 Fecha',
                     value: ahora.toLocaleDateString('es-ES'),
                     inline: true
                 },
                 {
-                    name: '🕒 Hora actual',
+                    name: '🕒 Hora',
                     value: ahora.toLocaleTimeString('es-ES'),
                     inline: true
                 },
                 {
-                    name: '📌 Estado',
-                    value: 'Convocatorias abiertas / en preparación (según región)',
-                    inline: false
-                },
-                {
-                    name: '🎯 Recomendación',
-                    value: 'Estudiar diariamente y repasar temas clave.',
+                    name: 'ℹ️ Info',
+                    value: 'Preparación activa de oposiciones',
                     inline: false
                 }
             )
-            .setFooter({ text: 'Sistema de información de oposiciones' })
             .setTimestamp();
 
-        await interaction.reply({ embeds: [embed] });
+        await interaction.editReply({ embeds: [embed] });
     }
 };
