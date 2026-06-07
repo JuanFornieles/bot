@@ -1,58 +1,38 @@
-const { 
-    Client, 
-    GatewayIntentBits, 
-    REST, 
-    Routes, 
-    SlashCommandBuilder, 
-    Events 
-} = require('discord.js');
-
+const fs = require('fs');
+const path = require('path');
+const { Client, Collection, GatewayIntentBits, Events } = require('discord.js');
 require('dotenv').config();
 
-// 👉 CLIENTE DEL BOT (ESTO ES LO QUE TE FALTABA)
-const client = new Client({
-    intents: [GatewayIntentBits.Guilds]
-});
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-// 👉 COMANDOS SLASH
-const commands = [
-    new SlashCommandBuilder()
-        .setName('info')
-        .setDescription('Muestra información del bot')
-        .toJSON()
-];
+client.commands = new Collection();
 
-// 👉 REGISTRADOR DE COMANDOS
-const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+// cargar comandos
+const commandsPath = path.join(__dirname, 'commands');
+const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'));
 
-// 👉 CUANDO EL BOT ESTÁ LISTO
-client.once(Events.ClientReady, async (c) => {
-    console.log(`✅ Conectado como ${c.user.tag}`);
+for (const file of commandFiles) {
+    const command = require(`./commands/${file}`);
+    client.commands.set(command.data.name, command);
+}
 
-    // Registrar comandos SOLO en tu servidor (rápido)
-    try {
-        await rest.put(
-            Routes.applicationGuildCommands(
-                process.env.CLIENT_ID,
-                process.env.GUILD_ID
-            ),
-            { body: commands }
-        );
-
-        console.log('🚀 Slash command /info registrado');
-    } catch (err) {
-        console.error('❌ Error registrando comandos:', err);
-    }
-});
-
-// 👉 RESPUESTA AL COMANDO
-client.on(Events.InteractionCreate, async (interaction) => {
+// ejecutar comandos
+client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
-    if (interaction.commandName === 'info') {
-        await interaction.reply('📌 Bot funcionando correctamente en Render/Local ✔️');
+    const command = client.commands.get(interaction.commandName);
+    if (!command) return;
+
+    try {
+        await command.execute(interaction);
+    } catch (err) {
+        console.error(err);
+        await interaction.reply({ content: 'Error ejecutando comando', ephemeral: true });
     }
 });
 
-// 👉 LOGIN DEL BOT
+client.once(Events.ClientReady, () => {
+    console.log(`Conectado como ${client.user.tag}`);
+});
+
 client.login(process.env.TOKEN);
