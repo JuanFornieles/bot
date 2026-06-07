@@ -1,38 +1,65 @@
-const fs = require('fs');
-const path = require('path');
-const { Client, Collection, GatewayIntentBits, Events } = require('discord.js');
+const {
+    Client,
+    GatewayIntentBits,
+    REST,
+    Routes,
+    SlashCommandBuilder,
+    Events
+} = require('discord.js');
+
 require('dotenv').config();
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+// 👉 CLIENTE
+const client = new Client({
+    intents: [GatewayIntentBits.Guilds]
+});
 
-client.commands = new Collection();
+// 👉 COMANDOS
+const commands = [
+    new SlashCommandBuilder()
+        .setName('info')
+        .setDescription('Información del bot')
+        .toJSON()
+];
 
-// cargar comandos
-const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'));
+// 👉 REST API
+const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
-for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    client.commands.set(command.data.name, command);
-}
-
-// ejecutar comandos
-client.on(Events.InteractionCreate, async interaction => {
-    if (!interaction.isChatInputCommand()) return;
-
-    const command = client.commands.get(interaction.commandName);
-    if (!command) return;
+// 👉 CUANDO EL BOT ESTÁ LISTO
+client.once(Events.ClientReady, async (c) => {
+    console.log(`✅ Conectado como ${c.user.tag}`);
 
     try {
-        await command.execute(interaction);
+        await rest.put(
+            Routes.applicationGuildCommands(
+                process.env.CLIENT_ID,
+                process.env.GUILD_ID
+            ),
+            { body: commands }
+        );
+
+        console.log('🚀 Slash command /info registrado');
     } catch (err) {
-        console.error(err);
-        await interaction.reply({ content: 'Error ejecutando comando', ephemeral: true });
+        console.error('❌ Error registrando comandos:', err);
     }
 });
 
-client.once(Events.ClientReady, () => {
-    console.log(`Conectado como ${client.user.tag}`);
+// 👉 INTERACCIONES (IMPORTANTE: SIN CRASH)
+client.on(Events.InteractionCreate, async (interaction) => {
+    if (!interaction.isChatInputCommand()) return;
+
+    try {
+        // ⚠️ SIEMPRE RESPONDER RÁPIDO
+        await interaction.deferReply();
+
+        if (interaction.commandName === 'info') {
+            await interaction.editReply('📌 Bot funcionando correctamente ✔️');
+        }
+
+    } catch (err) {
+        console.error('❌ Error en interacción:', err);
+    }
 });
 
+// 👉 LOGIN
 client.login(process.env.TOKEN);
