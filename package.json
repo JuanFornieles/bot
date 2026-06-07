@@ -1,0 +1,18 @@
+{
+  "name": "061-malaga-rp",
+  "version": "1.0.0",
+  "description": "Bot de Discord",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "register": "node registrar-comandos.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.26.4",
+    "dotenv": "^17.4.2"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
